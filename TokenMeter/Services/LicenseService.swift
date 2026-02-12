@@ -11,7 +11,7 @@ class LicenseService: ObservableObject {
     private let licenseKey = "license_key"
     
     // Gumroad product permalink — update this after creating the product
-    private let productPermalink = "tokenmeter"
+    private let productPermalink = "bfuewq"
     
     init() {
         // Check if already licensed

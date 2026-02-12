@@ -87,7 +87,7 @@ struct ActivationView: View {
                 Divider()
                 
                 HStack {
-                    Link("Buy license — $5", destination: URL(string: "https://waynebickerton.gumroad.com/l/tokenmeter")!)
+                    Link("Buy license — $5", destination: URL(string: "https://waynebickerton.gumroad.com/l/bfuewq")!)
                         .font(.system(size: 11))
                         .foregroundColor(.blue)
                     
