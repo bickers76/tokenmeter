@@ -22,5 +22,9 @@
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2026 Wayne Bickerton</string>
+	<key>NSRequiresAquaSystemAppearance</key>
+	<false/>
+	<key>NSAppearance</key>
+	<string>NSAppearanceNameDarkAqua</string>
 </dict>
 </plist>
