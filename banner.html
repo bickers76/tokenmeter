@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1280px;
+    height: 720px;
+    background: linear-gradient(135deg, #0a0a14 0%, #0d1020 50%, #0a0a14 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, 'SF Pro Display', 'Inter', sans-serif;
+    overflow: hidden;
+    position: relative;
+  }
+  
+  /* Subtle grid pattern */
+  body::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(74,222,128,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(74,222,128,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  
+  /* Glow behind the panel */
+  .glow {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(74,222,128,0.08) 0%, transparent 70%);
+    right: 200px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .content {
+    display: flex;
+    align-items: center;
+    gap: 80px;
+    position: relative;
+    z-index: 1;
+  }
+  
+  /* Left side — text */
+  .text-side {
+    max-width: 420px;
+  }
+  .text-side h1 {
+    font-size: 42px;
+    font-weight: 600;
+    color: #f1f5f9;
+    line-height: 1.15;
+    letter-spacing: -1.5px;
+    margin-bottom: 16px;
+  }
+  .text-side h1 span {
+    background: linear-gradient(135deg, #4ade80, #22d3ee);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .text-side p {
+    font-size: 17px;
+    color: #64748b;
+    line-height: 1.6;
+    margin-bottom: 28px;
+  }
+  .features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 20px;
+    font-size: 12px;
+    color: #94a3b8;
+  }
+  .tag .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #4ade80;
+  }
+  
+  /* Right side — Mac mockup */
+  .mac-frame {
+    position: relative;
+  }
+  
+  /* Menubar */
+  .menubar-mock {
+    background: rgba(30, 30, 46, 0.95);
+    border-radius: 8px 8px 0 0;
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 360px;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-bottom: none;
+  }
+  .menubar-left {
+    display: flex;
+    gap: 6px;
+  }
+  .menubar-left .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .menubar-left .dot.red { background: #ef4444; }
+  .menubar-left .dot.yellow { background: #fbbf24; }
+  .menubar-left .dot.green { background: #4ade80; }
+  .menubar-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #e2e8f0;
+    font-weight: 500;
+  }
+  .menubar-right .indicator {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #4ade80;
+  }
+  
+  /* App panel */
+  .app-panel {
+    width: 360px;
+    background: rgba(18, 18, 30, 0.98);
+    border-radius: 0 0 12px 12px;
+    padding: 20px;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-top: 1px solid rgba(255,255,255,0.03);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+  }
+  
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .panel-header span {
+    font-size: 10px;
+    font-weight: 600;
+    color: #475569;
+    letter-spacing: 1px;
+  }
+  .panel-header .gear { color: #334155; font-size: 13px; }
+  
+  .today-amount {
+    font-size: 36px;
+    font-weight: 300;
+    color: #f1f5f9;
+    letter-spacing: -1.5px;
+    font-variant-numeric: tabular-nums;
+  }
+  .today-label {
+    font-size: 11px;
+    color: #475569;
+    margin-bottom: 10px;
+  }
+  
+  .budget-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    margin-bottom: 4px;
+    overflow: hidden;
+  }
+  .budget-bar .fill {
+    height: 100%;
+    width: 48%;
+    background: #fbbf24;
+    border-radius: 2px;
+  }
+  .budget-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: #334155;
+    margin-bottom: 18px;
+  }
+  
+  .section-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.15);
+    letter-spacing: 1.2px;
+    margin-bottom: 10px;
+  }
+  
+  .provider-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+  }
+  .provider-name {
+    font-size: 12px;
+    color: #cbd5e1;
+    font-weight: 500;
+  }
+  .provider-amount {
+    font-size: 12px;
+    color: #f1f5f9;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .provider-bar {
+    height: 3px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 2px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .provider-bar .fill {
+    height: 100%;
+    border-radius: 2px;
+  }
+  .fill.anthropic { background: rgba(212,165,116,0.7); }
+  .fill.openai { background: rgba(116,185,255,0.7); }
+  .fill.google { background: rgba(129,199,132,0.7); }
+  
+  /* Rate limit section inside expanded */
+  .rate-limit {
+    margin: 6px 0 4px 0;
+    padding: 8px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 6px;
+  }
+  .rate-limit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .rate-limit-name {
+    font-size: 11px;
+    color: #cbd5e1;
+    font-weight: 500;
+  }
+  .rate-limit-price {
+    font-size: 10px;
+    color: #64748b;
+  }
+  .rate-limit-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    margin-bottom: 3px;
+    overflow: hidden;
+  }
+  .rate-limit-bar .fill {
+    height: 100%;
+    width: 62%;
+    background: #74b9ff;
+    border-radius: 2px;
+  }
+  .rate-limit-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: #475569;
+  }
+  .active-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4ade80;
+    display: inline-block;
+    margin-left: 4px;
+  }
+  
+  /* Insight */
+  .insight {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: rgba(251,191,36,0.06);
+    border-radius: 6px;
+    border: 1px solid rgba(251,191,36,0.1);
+    margin-top: 14px;
+  }
+  .insight span {
+    font-size: 10px;
+    color: #fbbf24;
+  }
+</style>
+</head>
+<body>
+
+<div class="glow"></div>
+
+<div class="content">
+  <!-- Left text -->
+  <div class="text-side">
+    <h1>See what your AI <span>actually costs</span></h1>
+    <p>Track spend across every provider. Budget alerts. Rate limits. All from your Mac menubar.</p>
+    <div class="features">
+      <div class="tag"><div class="dot"></div> Anthropic</div>
+      <div class="tag"><div class="dot"></div> OpenAI</div>
+      <div class="tag"><div class="dot"></div> Google AI</div>
+      <div class="tag"><div class="dot"></div> xAI</div>
+      <div class="tag">Native SwiftUI</div>
+      <div class="tag">macOS 13+</div>
+    </div>
+  </div>
+  
+  <!-- Right — app mockup -->
+  <div class="mac-frame">
+    <!-- Fake menubar top -->
+    <div class="menubar-mock">
+      <div class="menubar-left">
+        <div class="dot red"></div>
+        <div class="dot yellow"></div>
+        <div class="dot green"></div>
+      </div>
+      <div class="menubar-right">
+        <div class="indicator"></div>
+        $4.82
+      </div>
+    </div>
+    
+    <!-- App panel -->
+    <div class="app-panel">
+      <div class="panel-header">
+        <span>TOKENMETER</span>
+        <span class="gear">⚙</span>
+      </div>
+      
+      <div class="today-amount">$4.82</div>
+      <div class="today-label">Today</div>
+      
+      <div class="budget-bar"><div class="fill"></div></div>
+      <div class="budget-meta">
+        <span>48% of $10/day</span>
+        <span>$5.18 left</span>
+      </div>
+      
+      <div class="section-label">PROVIDERS</div>
+      
+      <!-- Anthropic — expanded -->
+      <div class="provider-row">
+        <span class="provider-name">▼ Anthropic</span>
+        <span class="provider-amount">$3.41</span>
+      </div>
+      <div class="provider-bar"><div class="fill anthropic" style="width:71%"></div></div>
+      
+      <!-- Rate limit -->
+      <div class="rate-limit">
+        <div class="rate-limit-header">
+          <span class="rate-limit-name">Claude Max</span>
+          <span class="rate-limit-price">$100/mo <span class="active-dot"></span></span>
+        </div>
+        <div class="rate-limit-bar"><div class="fill"></div></div>
+        <div class="rate-limit-meta">
+          <span>~38 msgs left</span>
+          <span>Resets in 28 min</span>
+        </div>
+      </div>
+      
+      <div class="provider-row">
+        <span class="provider-name">▶ OpenAI</span>
+        <span class="provider-amount">$1.22</span>
+      </div>
+      <div class="provider-bar"><div class="fill openai" style="width:25%"></div></div>
+      
+      <div class="provider-row">
+        <span class="provider-name">▶ Google AI</span>
+        <span class="provider-amount">$0.19</span>
+      </div>
+      <div class="provider-bar"><div class="fill google" style="width:4%"></div></div>
+      
+      <div class="insight">
+        <span>⚡ Anthropic is 71% of today's spend</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

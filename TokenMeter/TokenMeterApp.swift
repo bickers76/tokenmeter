@@ -7,31 +7,40 @@ struct TokenMeterApp: App {
     @StateObject private var license = LicenseService.shared
     
     var body: some Scene {
-        // Menubar icon — only shows when licensed
-        MenuBarExtra(isInserted: $license.isLicensed) {
+        // Menubar icon — always present
+        MenuBarExtra {
             VStack(spacing: 0) {
-                MainPanel(appState: appState)
-                    .frame(width: 320)
+                if license.isLicensed {
+                    MainPanel(appState: appState)
+                        .frame(width: 320)
+                } else {
+                    VStack(spacing: 12) {
+                        Text("TokenMeter")
+                            .font(.system(size: 14, weight: .semibold))
+                        Text("License required")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                        Button("Activate") {
+                            NSApp.activate(ignoringOtherApps: true)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.green)
+                    }
+                    .padding(20)
+                }
                 
                 Divider()
                     .padding(.vertical, 4)
                 
                 HStack {
-                    Button("Open Window") {
-                        openMainWindow()
+                    if license.isLicensed {
+                        Button("Settings") {
+                            openSettings()
+                        }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
                     }
-                    .buttonStyle(.plain)
-                    .font(.system(size: 11))
-                    .foregroundColor(.blue)
-                    
-                    Spacer()
-                    
-                    Button("Settings") {
-                        openSettings()
-                    }
-                    .buttonStyle(.plain)
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
                     
                     Spacer()
                     
@@ -49,16 +58,16 @@ struct TokenMeterApp: App {
         } label: {
             HStack(spacing: 4) {
                 Circle()
-                    .fill(appState.budgetColor)
+                    .fill(license.isLicensed ? appState.budgetColor : .gray)
                     .frame(width: 8, height: 8)
-                Text(appState.todaySpendFormatted)
+                Text(license.isLicensed ? appState.todaySpendFormatted : "—")
                     .font(.system(size: 12, weight: .medium, design: .rounded))
                     .monospacedDigit()
             }
         }
         .menuBarExtraStyle(.window)
         
-        // Main window — shows activation if not licensed, otherwise dashboard
+        // Main window — activation or dashboard
         Window("TokenMeter", id: "main") {
             Group {
                 if license.isLicensed {
@@ -83,10 +92,6 @@ struct TokenMeterApp: App {
             SettingsView(appState: appState)
                 .preferredColorScheme(.dark)
         }
-    }
-    
-    func openMainWindow() {
-        NSApp.activate(ignoringOtherApps: true)
     }
     
     func openSettings() {
