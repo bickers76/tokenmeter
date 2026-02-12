@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TokenMeter — See what your AI costs. One glance.</title>
+<meta name="description" content="A tiny Mac menubar app that tracks your AI spend across Anthropic, OpenAI, Google AI, and xAI. Budget alerts, rate limit warnings, and subscription tracking. $5.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --border: rgba(255,255,255,0.06);
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --accent: #4ade80;
+    --blue: #74b9ff;
+  }
+  
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  
+  /* Nav */
+  nav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+    background: rgba(10, 10, 15, 0.8);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  nav .logo {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+  nav .logo span { color: var(--accent); }
+  nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    transition: color 0.2s;
+  }
+  nav a:hover { color: var(--text); }
+  
+  /* Hero */
+  .hero {
+    padding: 160px 24px 80px;
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .hero .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--accent);
+    background: rgba(74, 222, 128, 0.08);
+    border: 1px solid rgba(74, 222, 128, 0.15);
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+    letter-spacing: 0.5px;
+  }
+  .hero h1 {
+    font-size: clamp(36px, 6vw, 56px);
+    font-weight: 300;
+    line-height: 1.1;
+    letter-spacing: -2px;
+    margin-bottom: 20px;
+  }
+  .hero h1 strong {
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--accent), var(--blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero p {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 520px;
+    margin: 0 auto 40px;
+    line-height: 1.7;
+  }
+  
+  /* CTA */
+  .cta-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    background: var(--accent);
+    color: #0a0a0f;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-primary:hover {
+    background: #5eead4;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(74, 222, 128, 0.25);
+  }
+  .btn-primary .price {
+    font-weight: 400;
+    opacity: 0.7;
+  }
+  .btn-secondary {
+    padding: 14px 28px;
+    background: transparent;
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover {
+    border-color: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.03);
+  }
+  .meta {
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .meta span { opacity: 0.5; }
+  
+  /* Menubar demo */
+  .menubar-demo {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin: 60px auto 0;
+    flex-wrap: wrap;
+  }
+  .menubar-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--surface);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+  .dot.green { background: var(--accent); }
+  .dot.yellow { background: #fbbf24; }
+  .dot.red { background: #ef4444; }
+  
+  /* Screenshot */
+  .screenshot {
+    max-width: 900px;
+    margin: 80px auto;
+    padding: 0 24px;
+    text-align: center;
+  }
+  .screenshot img {
+    width: 100%;
+    max-width: 700px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+  }
+  
+  /* Features */
+  .features {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 80px 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 32px;
+  }
+  .feature {
+    padding: 24px;
+    background: var(--surface);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .feature .icon {
+    font-size: 24px;
+    margin-bottom: 12px;
+  }
+  .feature h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .feature p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  
+  /* Providers */
+  .providers {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    text-align: center;
+  }
+  .providers h2 {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .provider-logos {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    opacity: 0.5;
+  }
+  .provider-logos span {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  
+  /* FAQ */
+  .faq {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 80px 24px;
+  }
+  .faq h2 {
+    font-size: 24px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .faq-item {
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .faq-item h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .faq-item p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  
+  /* Footer */
+  footer {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px 24px 60px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+  }
+  footer .cta-final {
+    margin-bottom: 24px;
+  }
+  footer .links {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  footer .links a {
+    color: var(--muted);
+    text-decoration: none;
+  }
+  footer .links a:hover { color: var(--text); }
+  
+  /* Responsive */
+  @media (max-width: 600px) {
+    .hero { padding: 120px 20px 60px; }
+    .features { grid-template-columns: 1fr; }
+    .cta-group { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Token<span>Meter</span></div>
+  <div style="display: flex; gap: 20px;">
+    <a href="#features">Features</a>
+    <a href="#faq">FAQ</a>
+    <a href="#" class="btn-primary" style="padding: 8px 16px; font-size: 13px; border-radius: 6px;">Download — $5</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="badge">macOS menubar app</div>
+  <h1>See what your AI <strong>actually costs</strong></h1>
+  <p>A tiny menubar app that tracks your spend across every AI provider. Budget alerts. Rate limit warnings. One glance.</p>
+  
+  <div class="cta-group">
+    <a href="#" class="btn-primary">
+      Download for Mac <span class="price">— $5</span>
+    </a>
+    <a href="#features" class="btn-secondary">See how it works</a>
+  </div>
+  
+  <div class="meta">
+    macOS 13+ <span>·</span> Apple Silicon & Intel <span>·</span> One-time purchase
+  </div>
+  
+  <div class="menubar-demo">
+    <div class="menubar-chip"><div class="dot green"></div> $4.82</div>
+    <div class="menubar-chip"><div class="dot yellow"></div> $8.40</div>
+    <div class="menubar-chip"><div class="dot red"></div> $12.30</div>
+  </div>
+</section>
+
+<!-- Screenshot placeholder -->
+<section class="screenshot">
+  <!-- Replace with actual screenshot -->
+  <div style="width: 100%; max-width: 360px; margin: 0 auto; background: rgba(22,22,38,0.97); border-radius: 12px; padding: 24px; border: 1px solid var(--border); box-shadow: 0 40px 80px rgba(0,0,0,0.5); text-align: left;">
+    <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+      <span style="font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 1px;">TOKENMETER</span>
+      <span style="font-size: 12px; color: var(--muted);">⚙</span>
+    </div>
+    <div style="font-size: 32px; font-weight: 300; letter-spacing: -1px;">$4.82</div>
+    <div style="font-size: 11px; color: var(--muted); margin-bottom: 10px;">Today</div>
+    <div style="height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; margin-bottom: 4px;">
+      <div style="height: 100%; width: 48%; background: #fbbf24; border-radius: 2px;"></div>
+    </div>
+    <div style="display: flex; justify-content: space-between; font-size: 9px; color: var(--muted); margin-bottom: 20px;">
+      <span>48% of $10/day</span>
+      <span>$5.18 left</span>
+    </div>
+    <div style="font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.3); letter-spacing: 1.2px; margin-bottom: 10px;">PROVIDERS</div>
+    <div style="padding: 6px 0; display: flex; justify-content: space-between;">
+      <span style="font-size: 12px;">▶ Anthropic</span>
+      <span style="font-size: 12px; font-variant-numeric: tabular-nums;">$3.41</span>
+    </div>
+    <div style="height: 3px; background: rgba(212,165,116,0.7); width: 71%; border-radius: 2px; margin-bottom: 4px;"></div>
+    <div style="padding: 6px 0; display: flex; justify-content: space-between;">
+      <span style="font-size: 12px;">▶ OpenAI</span>
+      <span style="font-size: 12px; font-variant-numeric: tabular-nums;">$1.22</span>
+    </div>
+    <div style="height: 3px; background: rgba(116,185,255,0.7); width: 25%; border-radius: 2px; margin-bottom: 4px;"></div>
+    <div style="padding: 6px 0; display: flex; justify-content: space-between;">
+      <span style="font-size: 12px;">▶ Google AI</span>
+      <span style="font-size: 12px; font-variant-numeric: tabular-nums;">$0.19</span>
+    </div>
+    <div style="height: 3px; background: rgba(129,199,132,0.7); width: 4%; border-radius: 2px;"></div>
+  </div>
+</section>
+
+<section class="features" id="features">
+  <div class="feature">
+    <div class="icon">📊</div>
+    <h3>All providers, one view</h3>
+    <p>Anthropic, OpenAI, Google AI, xAI — see every dollar across every provider without opening four dashboards.</p>
+  </div>
+  <div class="feature">
+    <div class="icon">⚡</div>
+    <h3>Rate limit tracking</h3>
+    <p>See how close you are to hitting your Claude Max or ChatGPT session limits. Know when they reset. No more surprise throttles.</p>
+  </div>
+  <div class="feature">
+    <div class="icon">🔔</div>
+    <h3>Budget alerts</h3>
+    <p>Set a daily budget. Get a native macOS notification when you're approaching it. Never wake up to a $500 API bill again.</p>
+  </div>
+  <div class="feature">
+    <div class="icon">🔒</div>
+    <h3>Keys in Keychain</h3>
+    <p>API keys are stored in macOS Keychain — the same encryption your system uses for passwords. Never in plaintext files.</p>
+  </div>
+  <div class="feature">
+    <div class="icon">📈</div>
+    <h3>Weekly trends</h3>
+    <p>See your daily spend pattern and monthly pace projection. Know if this week is a $50 week or a $200 week.</p>
+  </div>
+  <div class="feature">
+    <div class="icon">🍎</div>
+    <h3>Pure native Mac</h3>
+    <p>SwiftUI. No Electron. No web views. Runs as a tiny menubar icon. Uses almost zero resources. Feels like it belongs on your Mac.</p>
+  </div>
+</section>
+
+<section class="providers">
+  <h2>Works with</h2>
+  <div class="provider-logos">
+    <span>Anthropic</span>
+    <span>OpenAI</span>
+    <span>Google AI</span>
+    <span>xAI</span>
+  </div>
+</section>
+
+<section class="faq" id="faq">
+  <h2>Questions</h2>
+  
+  <div class="faq-item">
+    <h3>Does it work with Claude Max / ChatGPT Plus?</h3>
+    <p>Yes. For subscriptions, TokenMeter tracks your rate limits — how many messages you have left and when they reset. For API usage, it tracks exact token costs per model. You see both in one view.</p>
+  </div>
+  
+  <div class="faq-item">
+    <h3>How does it get my usage data?</h3>
+    <p>TokenMeter polls your provider APIs directly using your API keys. Keys are stored securely in macOS Keychain. No data leaves your machine except the API calls to your own provider accounts.</p>
+  </div>
+  
+  <div class="faq-item">
+    <h3>Is it a subscription?</h3>
+    <p>No. $5 once, yours forever. Free updates included.</p>
+  </div>
+  
+  <div class="faq-item">
+    <h3>What macOS versions are supported?</h3>
+    <p>macOS 13 (Ventura) and above. Works on both Apple Silicon and Intel Macs.</p>
+  </div>
+  
+  <div class="faq-item">
+    <h3>Does it use a lot of resources?</h3>
+    <p>No. It's a native SwiftUI app — no Electron, no browser engine. Sits in your menubar and polls APIs every 5 minutes by default. You won't notice it's running.</p>
+  </div>
+  
+  <div class="faq-item">
+    <h3>Can I use it with OpenClaw / Claude Code?</h3>
+    <p>Absolutely. If you're running AI agents that make API calls, TokenMeter shows you exactly what those sessions are costing. Pair it with budget alerts to avoid runaway costs.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="cta-final">
+    <a href="#" class="btn-primary">Download TokenMeter — $5</a>
+  </div>
+  <div class="links">
+    Built by <a href="https://waynebickerton.com">Wayne Bickerton</a>
+  </div>
+</footer>
+
+</body>
+</html>
