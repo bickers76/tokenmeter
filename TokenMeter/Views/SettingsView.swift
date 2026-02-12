@@ -102,6 +102,21 @@ struct SettingsView: View {
                     Toggle("Launch at login", isOn: $appState.launchAtLogin)
                 }
                 
+                Section("License") {
+                    HStack {
+                        Text("Status")
+                        Spacer()
+                        Text("Active ✓")
+                            .foregroundColor(.green)
+                            .font(.system(size: 12))
+                    }
+                    Button("Deactivate License") {
+                        LicenseService.shared.deactivate()
+                    }
+                    .foregroundColor(.red)
+                    .font(.system(size: 12))
+                }
+                
                 Section("About") {
                     HStack {
                         Text("TokenMeter")

@@ -4,10 +4,11 @@ import UserNotifications
 @main
 struct TokenMeterApp: App {
     @StateObject private var appState = AppState()
+    @StateObject private var license = LicenseService.shared
     
     var body: some Scene {
-        // Menubar icon — always present
-        MenuBarExtra {
+        // Menubar icon — only shows when licensed
+        MenuBarExtra(isInserted: $license.isLicensed) {
             VStack(spacing: 0) {
                 MainPanel(appState: appState)
                     .frame(width: 320)
@@ -57,19 +58,27 @@ struct TokenMeterApp: App {
         }
         .menuBarExtraStyle(.window)
         
-        // Floating desktop window
+        // Main window — shows activation if not licensed, otherwise dashboard
         Window("TokenMeter", id: "main") {
-            FloatingWindowView(appState: appState)
-                .preferredColorScheme(.dark)
-                .onDisappear {
+            Group {
+                if license.isLicensed {
+                    FloatingWindowView(appState: appState)
+                } else {
+                    ActivationView(license: license)
+                }
+            }
+            .preferredColorScheme(.dark)
+            .onDisappear {
+                if license.isLicensed {
                     sendMenubarNotification()
                 }
+            }
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
         .defaultPosition(.topTrailing)
         
-        // Settings window
+        // Settings
         Settings {
             SettingsView(appState: appState)
                 .preferredColorScheme(.dark)
