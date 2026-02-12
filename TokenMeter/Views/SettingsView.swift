@@ -115,6 +115,12 @@ struct SettingsView: View {
                         Link("Wayne Bickerton", destination: URL(string: "https://waynebickerton.com")!)
                             .foregroundColor(.blue)
                     }
+                    HStack {
+                        Text("Feature request?")
+                        Spacer()
+                        Link("Submit feedback →", destination: URL(string: "https://github.com/bickers76/tokenmeter/issues/new?labels=feature-request&title=Feature+request:")!)
+                            .foregroundColor(.blue)
+                    }
                 }
             }
             .tabItem {
