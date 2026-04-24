@@ -5,18 +5,77 @@ class LicenseService: ObservableObject {
     static let shared = LicenseService()
     
     @Published var isLicensed: Bool = false
+    @Published var isTrialActive: Bool = false
+    @Published var trialDaysRemaining: Int = 0
     @Published var licenseError: String? = nil
     
-    private let keychain = KeychainHelper.shared
+    let keychain = KeychainHelper.shared
     private let licenseKey = "license_key"
+    private let trialStartKey = "trial_start_date"
+    private let trialDuration: TimeInterval = 7 * 24 * 60 * 60 // 7 days
     
-    // Gumroad product permalink — update this after creating the product
-    private let productPermalink = "bfuewq"
+    // Gumroad product ID (for products created after Jan 9 2023, use product_id not product_permalink)
+    private let productId = "MBbhPgH7BJSLNDBPbFmbKQ=="
+    
+    /// Whether the user can use the app (licensed OR active trial)
+    var canUseApp: Bool {
+        isLicensed || isTrialActive
+    }
+    
+    /// Whether this is the user's first ever launch (no trial started, no license)
+    var isFirstLaunch: Bool {
+        keychain.get(key: trialStartKey) == nil && keychain.get(key: licenseKey) == nil
+    }
+    
+    /// Whether the trial has expired (started but past 7 days, and not licensed)
+    var isTrialExpired: Bool {
+        !isLicensed && !isTrialActive && keychain.get(key: trialStartKey) != nil
+    }
     
     init() {
         // Check if already licensed
         if let key = keychain.get(key: licenseKey) {
             isLicensed = !key.isEmpty
+        }
+        
+        // Check trial status
+        refreshTrialStatus()
+    }
+    
+    /// Start the 7-day free trial
+    func startTrial() {
+        let now = Date()
+        let timestamp = String(now.timeIntervalSince1970)
+        try? keychain.save(key: trialStartKey, value: timestamp)
+        NotificationService.shared.scheduleTrialNotifications(trialStartDate: now)
+        refreshTrialStatus()
+    }
+    
+    /// Recalculate trial state from stored start date
+    func refreshTrialStatus() {
+        guard !isLicensed else {
+            isTrialActive = false
+            trialDaysRemaining = 0
+            return
+        }
+        
+        guard let startString = keychain.get(key: trialStartKey),
+              let startTimestamp = Double(startString) else {
+            isTrialActive = false
+            trialDaysRemaining = 0
+            return
+        }
+        
+        let startDate = Date(timeIntervalSince1970: startTimestamp)
+        let elapsed = Date().timeIntervalSince(startDate)
+        let remaining = trialDuration - elapsed
+        
+        if remaining > 0 {
+            isTrialActive = true
+            trialDaysRemaining = max(1, Int(ceil(remaining / (24 * 60 * 60))))
+        } else {
+            isTrialActive = false
+            trialDaysRemaining = 0
         }
     }
     
@@ -37,7 +96,7 @@ class LicenseService: ObservableObject {
         request.addValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         
         let machineId = getMachineId()
-        let body = "product_id=\(productPermalink)&license_key=\(trimmedKey)&increment_uses_count=true"
+        let body = "product_id=\(productId.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? productId)&license_key=\(trimmedKey)&increment_uses_count=true"
         request.httpBody = body.data(using: .utf8)
         
         do {
